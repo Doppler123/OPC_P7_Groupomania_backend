@@ -1,21 +1,13 @@
 const express = require('express');
 const app = express();
 // const path = require('path');
-const mongoose = require('mongoose');
+
 const helmet = require('helmet');
 require('dotenv').config();
 
 const userRoutes = require('./routes/user');
 
 const postRoutes = require('./routes/post');
-
-mongoose.connect(process.env.MONGO_DB,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(() => console.log('Connexion à MongoDB réussie !'))
-  .catch(() => console.log('Connexion à MongoDB échouée !'));
 
 app.use(express.json());
 

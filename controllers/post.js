@@ -1,7 +1,21 @@
-const Post = require('../models/post');
-
 const fs = require('fs');
-const post = require('../models/post');
+const dbConfig = require("../db-config");
+const db = dbConfig.dbConnection();
+
+exports.createPost = (req, res, next) => {
+  const sqlInsert = "INSERT INTO posts SET ?";
+  db.query(sqlInsert, req.body, (err, result) => {
+    if (result){
+      res.status(201).json({ message: 'Message has been posted !'});
+    }
+    if (err) {
+      res.status(404).json({ err });
+      throw err;
+    }
+  });
+};
+
+// Bellow there s only code from P6 working with Mongo Db :
 
 exports.getAllPost = (req, res, next) => {
   Post.find().then(
@@ -31,25 +45,6 @@ exports.getOnePost = (req, res, next) => {
       });
     }
   );
-};
-
-exports.createPost = (req, res, next) => {
-  const postObject = JSON.parse(req.body.post);
-  delete postObject._id;
-  delete postObject._userId;
-  const post = new Post({
-    ...postObject,
-    userId: req.auth.userId,
-    // imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-    likes: 0,
-    dislikes: 0,
-    usersLiked: [],
-    usersDisliked: [],
-  });
-
-  post.save()
-    .then(() => { res.status(201).json({ message: 'Objet enregistré !' }) })
-    .catch(error => { res.status(400).json({ error }) })
 };
 
 exports.modifyPost = (req, res, next) => {

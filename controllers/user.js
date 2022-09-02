@@ -1,43 +1,78 @@
+const dbConfig = require("../db-config");
+const db = dbConfig.dbConnection();
+
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const User = require('../models/user');
+
 require('dotenv').config();
 
-exports.signup = (req, res, next) => {
-    bcrypt.hash(req.body.password, 10)
-      .then(hash => {
-        const user = new User({
-          email: req.body.email,
-          password: hash
-        });
-        user.save()
-          .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-          .catch(error => res.status(400).json({ error }));
-      })
-      .catch(error => res.status(500).json({ error }));
-  };
+exports.signup = async (req, res, next) => {
+    try {
+    const hashedPassword = await bcrypt.hash(req.body.user_password, 10);
+    const user = {
+        ...req.body,
+        user_password: hashedPassword
+    };
+    const sql = "INSERT INTO users SET ?";
+    db.query(sql, user, (err, result) => {
+      if (!result) {
+        res.status(200).json({ message: "This email is already existing in database" });
+      } else {
+        res.status(201).json({ message: "New user successfully created" });
+      }
+    });
+  } catch (err) {
+    res.status(200).json({ message: "Problem with authentification", err });
+  }
+};
 
-  exports.login = (req, res, next) => {
-    User.findOne({ email: req.body.email })
-        .then(user => {
-            if (!user) {
-                return res.status(401).json({ error: 'Utilisateur non trouvé !' });
-            }
-            bcrypt.compare(req.body.password, user.password)
-                .then(valid => {
-                    if (!valid) {
-                        return res.status(401).json({ error: 'Mot de passe incorrect !' });
-                    }
-                    (res.status(200).json({
-                        userId: user._id,
-                        token: jwt.sign(
-                            { userId: user._id },
-                            process.env.JWT_SECRET,
-                            { expiresIn: process.env.JWT_EXPIRES }
-                        )
-                    })); 
-                })
-                .catch(error => res.status(500).json({ error }));
+ exports.login = (req, res, next) => {
+    const { user_email, user_password: nonHashedPassword } = req.body;
+    const sql = `SELECT user_id, user_email, user_password, user_isAdmin, user_isActive FROM users WHERE user_email=?`;
+    db.query(sql, [user_email], async (err, result) => {
+      console.log(result);
+        if (err) {
+        return res.status(404).json({ err });
+      }
+
+      if (result[0] && result[0].user_isActive === 1) {
+        try {
+          const { user_password: hashedPassword, user_id } = result[0];
+          const compareIsOk = await bcrypt.compare(nonHashedPassword, hashedPassword);
+          if (compareIsOk) {
+            const token = jwt.sign(
+                { user_id },
+                'Paze454qsd12sc54za45ra', { // this string has to be put in .env
+                expiresIn: "24h",
+                });
+  
+            delete result[0].user_password;
+  
+            res.cookie("jwt", token);
+            res.status(200).json({
+              user: result[0],
+              token: jwt.sign(
+                { userId: user_id }, 
+                'Paze454qsd12sc54za45ra', {   // this string has to be put in .env
+                expiresIn: "24h",
+              }),
+            });
+          } 
+        } 
+        catch (err) {
+          console.log(err);
+          return res.status(400).json({ err });
+        }
+      } else if (result[0] && result[0].user_isActive === 0) {
+        res.status(200).json({
+          error: true,
+          message: "Your account has been desactived",
+        });
+      } else if (!result[0]) {
+        res.status(200).json({
+          error: true,
+          message: "Email and Pawword are not matching"
         })
-        .catch(error => res.status(500).json({ error }));
- };
+      }
+    });
+  };
