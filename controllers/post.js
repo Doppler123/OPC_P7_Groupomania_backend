@@ -2,9 +2,13 @@ const fs = require('fs');
 const dbConfig = require("../db-config");
 const db = dbConfig.dbConnection();
 
-exports.createPost = (req, res, next) => {
-  const sqlInsert = "INSERT INTO posts SET ?";
-  db.query(sqlInsert, req.body, (err, result) => {
+/* exports.createPost = (req, res, next) => {
+  const newPostFromFront = {
+    ...req.body
+};
+console.log (newPostFromFront);
+   const sql = "INSERT INTO posts SET ?";
+  db.query(sql, newPostFromFront, (err, result) => {
     if (result){
       res.status(201).json({ message: 'Message has been posted !'});
     }
@@ -13,7 +17,38 @@ exports.createPost = (req, res, next) => {
       throw err;
     }
   });
+};  */
+
+exports.createPost = (req, res, next) => {
+  let { body, file } = req;
+  if (!file) delete req.body.post_image;
+  body = {
+    ...body,
+  };
+
+  const sqlInsert = "INSERT INTO posts SET ?";
+  db.query(sqlInsert, body, (err, result) => {
+    if (err) {
+      res.status(404).json({ err });
+      throw err;
+    }
+    // post_id will be equal to the post inserted, and will be reused to link the image at the correct post in the below query
+    const post_id = result.insertId;
+    if (file) {
+      const sqlInsertImage = `INSERT INTO images (image_url, post_id) VALUES ("${file.filename}", ${post_id})`;
+      db.query(sqlInsertImage, (err, result) => {
+        if (err) {
+          res.status(404).json({ err });
+          throw err;
+        }
+        res.status(200).json(result);
+      });
+    } else {
+      res.status(200).json(result);
+    }
+  });
 };
+
 
 // Bellow there s only code from P6 working with Mongo Db :
 
