@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const path = require('path');
-
+const cookieParser = require("cookie-parser");
 const helmet = require('helmet');
 require('dotenv').config();
 
@@ -9,7 +9,10 @@ const userRoutes = require('./routes/user');
 
 const postRoutes = require('./routes/post');
 
+
 app.use(express.json());
+
+app.use(cookieParser());
 
 app.use(helmet({
   crossOriginResourcePolicy : false

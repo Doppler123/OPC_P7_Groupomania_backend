@@ -1,15 +1,29 @@
+const dbConfig = require("../db-config");
+const db = dbConfig.dbConnection();
+
 const jwt = require('jsonwebtoken');
- 
+
 module.exports = (req, res, next) => {
-   try {
-       const token = req.headers.authorization.split(' ')[1];
-       const decodedToken = jwt.verify(token, 'Paze454qsd12sc54za45ra'); // this string has to be put in .env
-       const userId = decodedToken.userId;
-       req.auth = {
-           userId: userId
-       };
-	next();
-   } catch(error) {
-       res.status(401).json({ error });
-   }
+  try {
+    if (req.cookies.bearerToken) {
+      const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // this string has to be put in .env
+      console.log(decodedBearerToken);
+      const { user_id: userId } = decodedBearerToken;
+      const sql = `SELECT user_id FROM users WHERE user_id = ${userId}`;
+      db.query(sql, (err, result) => {
+        if (err) res.status(204).json(err);
+        else {
+          next();
+        }
+      });
+    } else {
+      res.clearCookie();
+      res.status(401).json({ message: "User is unauthorized"});
+    }
+  } catch (err) {
+    res.clearCookie();
+    console.log(err);
+    res.status(401).json({ message: "User is unauthorized" });
+  }
 };
+

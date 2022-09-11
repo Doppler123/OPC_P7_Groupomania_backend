@@ -1,14 +1,16 @@
 const fs = require('fs');
 const dbConfig = require("../db-config");
 const db = dbConfig.dbConnection();
+const jwt = require('jsonwebtoken');
 
-/* exports.createPost = (req, res, next) => {
-  const newPostFromFront = {
-    ...req.body
-};
-console.log (newPostFromFront);
-   const sql = "INSERT INTO posts SET ?";
-  db.query(sql, newPostFromFront, (err, result) => {
+exports.createPost = (req, res, next) => {
+  let { body, file } = req;
+  body = {
+    ...body,
+  };
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // this string has to be put in .env
+  const sql =`INSERT INTO posts (post_text, post_userId, post_imageName, post_imagePath) VALUES ("${body.post_text}", "${decodedBearerToken.user_id}", "${body.post_imageName}", "${file.path}")`
+  db.query(sql, (err, result) => {
     if (result){
       res.status(201).json({ message: 'Message has been posted !'});
     }
@@ -17,38 +19,7 @@ console.log (newPostFromFront);
       throw err;
     }
   });
-};  */
-
-exports.createPost = (req, res, next) => {
-  let { body, file } = req;
-  if (!file) delete req.body.post_image;
-  body = {
-    ...body,
-  };
-
-  const sqlInsert = "INSERT INTO posts SET ?";
-  db.query(sqlInsert, body, (err, result) => {
-    if (err) {
-      res.status(404).json({ err });
-      throw err;
-    }
-    // post_id will be equal to the post inserted, and will be reused to link the image at the correct post in the below query
-    const post_id = result.insertId;
-    if (file) {
-      const sqlInsertImage = `INSERT INTO images (image_url, post_id) VALUES ("${file.filename}", ${post_id})`;
-      db.query(sqlInsertImage, (err, result) => {
-        if (err) {
-          res.status(404).json({ err });
-          throw err;
-        }
-        res.status(200).json(result);
-      });
-    } else {
-      res.status(200).json(result);
-    }
-  });
-};
-
+};  
 
 // Bellow there s only code from P6 working with Mongo Db :
 
