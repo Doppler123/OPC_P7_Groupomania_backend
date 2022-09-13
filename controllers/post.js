@@ -1,4 +1,3 @@
-const fs = require('fs');
 const dbConfig = require("../db-config");
 const db = dbConfig.dbConnection();
 const jwt = require('jsonwebtoken');
@@ -63,64 +62,72 @@ exports.deletePost = (req, res, next) => {
   });
 };
 
+exports.likeUnlikePost = (req, res) => {
+  const { userId, postId } = req.body;
+  const sql = `SELECT * FROM likes WHERE like_userId = ${userId} AND like_postId = ${postId}`;
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.log(err);
+      res.status(404).json({ err });
+      throw err;
+    }
+    if (result.length === 0) {
+      const sql = `INSERT INTO likes (like_userId	, like_postId) VALUES (${userId}, ${postId})`;
+      db.query(sql, (err, result) => {
+        res.status(200).json(result);
+        if (err) {
+          console.log(err);
+          res.status(404).json({ err });
+          throw err;
+        }
+      });
+    } else {
+      const sql = `DELETE FROM likes WHERE like_userId = ${userId} AND like_postId = ${postId}`;
+      db.query(sql, (err, result) => {
+        res.status(200).json(result);
+        if (err) {
+          console.log(err);
+          res.status(404).json(err);
+          throw err;
+        }
+      });
+    }
+  });
+};
+
+exports.totalOfLikes = (req, res) => {
+  const { postId } = req.body;
+  const sql = `SELECT COUNT(*) AS total FROM likes WHERE like_postId= ${postId}`;
+  db.query(sql, (err, result) => {
+    if (result){
+      res.status(200).json(result);
+    }
+    if (err) {
+      res.status(404).json({ err });
+      throw err;
+    }
+  });
+};
+
+exports.isPostLikedByUser = (req, res) => {
+  const { userId, postId } = req.body;
+  const sql = `SELECT like_postId, like_userId FROM likes WHERE like_userId = ${userId} AND like_postId	= ${postId}`;
+  db.query(sql, (err, result) => {
+    if (result){
+      res.status(200).json(result);
+    }
+    if (err) {
+      res.status(404).json({ err });
+      throw err;
+    }
+  });
+};
+
+
+
 // Bellow there s only code from P6 working with Mongo Db :
 
-exports.notePost = (req, res, next) => {
-  let like = req.body.like;
-  console.log(like);
-  let userId = req.body.userId;
-
-  switch (like) {
-
-    case 1:
-      Post.updateOne(
-        { _id: req.params.id },
-        { $push: { usersLiked: userId }, $inc: { likes: +1 } }
-      )
-        .then(() => res.status(200).json({ message: 'I like' }))
-        .catch((error) => res.status(400).json({ error }))
-      break;
-
-    case 0:
-      Post.findOne({ _id: req.params.id })
-        .then((post) => {
-          if (post.usersLiked.includes(userId)) {
-            Post.updateOne(
-              { _id: req.params.id },
-              { $unset: { usersLiked: userId }, $inc: { likes: -1 } })
-              .then(() => res.status(200).json({ message: 'I don\t know if I like or dislike' })
-              )
-              .catch((error) => res.status(400).json({ error }))
-          }
-          if (post.usersDisliked.includes(userId)) {
-            Post.updateOne(
-              { _id: req.params.id },
-              { $unset: { usersDisliked: userId }, $inc: { dislikes: -1 } }
-            )
-              .then(() => res.status(200).json({ message: 'I don\t know if I like or dislike' }))
-              .catch((error) => res.status(400).json({ error }))
-          }
-        })
-        .catch((error) => res.status(404).json({ error }))
-      break;
-
-    case -1:
-      Post.updateOne(
-        { _id: req.params.id },
-        { $push: { usersDisliked: userId }, $inc: { dislikes: +1 } }
-      )
-        .then(() => res.status(200).json({ message: 'I don\'t like' }))
-        .catch((error) => res.status(400).json({ error }))
-      break;
-
-    default:
-      console.log(error);
-  }
-}
-
-// Bellow there s only code from P6 working with Mongo Db :
-
-exports.modifyPost = (req, res, next) => {
+/* exports.modifyPost = (req, res, next) => {
   const postObject = req.file ? {
     ...JSON.parse(req.body.post),
     imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
@@ -140,5 +147,5 @@ exports.modifyPost = (req, res, next) => {
       res.status(400).json({ error });
     });
 };
-
+ */
 

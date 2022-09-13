@@ -9,8 +9,11 @@ const postCtrl = require('../controllers/post');
 router.get('/', auth, postCtrl.getAllPost);
 router.get('/:id', auth, postCtrl.getOnePost);
 router.post('/', auth, upload.single("post_imageFile"), postCtrl.createPost);  
-router.put('/:id', auth, postCtrl.modifyPost);
+// router.put('/:id', auth, postCtrl.modifyPost);
 router.delete('/:id', auth, postCtrl.deletePost);
-router.post('/:id/like', auth, postCtrl.notePost);
+
+router.patch("/:id/likeInteractions", postCtrl.likeUnlikePost);  
+router.post("/:id/likeInteractions", postCtrl.totalOfLikes); 
+router.post("/:id/isPostLikedByUser", postCtrl.isPostLikedByUser); 
 
 module.exports = router;
