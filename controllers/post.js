@@ -35,8 +35,7 @@ exports.getAllPost = (req, res, next) => {
 };
 
 exports.getOnePost = (req, res, next) => {
-  const { id : postId } = req.params;
-  const sql = `SELECT * FROM posts p, users u WHERE p.post_id = ${postId} AND u.user_id=p.post_userId;`;
+  const sql = `SELECT * FROM posts p, users u WHERE p.post_id = ` + req.params.id + ` AND u.user_id=p.post_userId;`;
   db.query(sql, (err, result) => {
     if (result){
       res.status(200).json(result);
@@ -49,8 +48,7 @@ exports.getOnePost = (req, res, next) => {
 };
 
 exports.deletePost = (req, res, next) => {
-  const { id: post_id } = req.params
-  const sql = `DELETE FROM posts WHERE post_id = ${post_id}`;
+  const sql = `DELETE FROM posts WHERE post_id = ` + req.params.id;
   db.query(sql, (err, result) => {
     if (result){
       res.status(200).json(result);

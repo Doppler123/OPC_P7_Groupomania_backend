@@ -12,8 +12,8 @@ router.post('/', auth, upload.single("post_imageFile"), postCtrl.createPost);
 // router.put('/:id', auth, postCtrl.modifyPost);
 router.delete('/:id', auth, postCtrl.deletePost);
 
-router.patch("/:id/likeInteractions", postCtrl.likeUnlikePost);  
-router.post("/:id/likeInteractions", postCtrl.totalOfLikes); 
-router.post("/:id/isPostLikedByUser", postCtrl.isPostLikedByUser); 
+router.patch("/:id/likeInteractions", auth, postCtrl.likeUnlikePost);  
+router.post("/:id/likeInteractions", auth, postCtrl.totalOfLikes); 
+router.post("/:id/isPostLikedByUser", auth, postCtrl.isPostLikedByUser); 
 
 module.exports = router;

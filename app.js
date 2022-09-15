@@ -9,6 +9,7 @@ const userRoutes = require('./routes/user');
 
 const postRoutes = require('./routes/post');
 
+const commentRoutes = require('./routes/comment');
 
 app.use(express.json());
 
@@ -31,5 +32,7 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/api/auth', userRoutes);
 
 app.use('/api/posts', postRoutes);
+
+app.use('/api/comments', commentRoutes);
 
 module.exports = app;
