@@ -14,7 +14,7 @@ exports.createComment = (req, res, next) => {
 };
 
 exports.getAllComment = (req, res, next) => {
-  const sql = `SELECT * FROM comments WHERE comment_postId = ` + req.params.id;
+  const sql = `SELECT * FROM comments c, users u WHERE u.user_id=c.comment_userId AND c.comment_postId = ` + req.params.id + ` ORDER BY comment_time ASC`;
   db.query(sql, (err, result) => {
     if (result){
     res.status(200).json(result);
