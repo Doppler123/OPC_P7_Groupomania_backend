@@ -28,7 +28,7 @@ exports.signup = async (req, res, next) => {
 
  exports.login = (req, res, next) => {
     const { user_email, user_password: nonHashedPassword } = req.body;
-    const sql = `SELECT user_id, user_email, user_password, user_isAdmin, user_isActive FROM users WHERE user_email=?`;
+    const sql = `SELECT user_id, user_email, user_firstName, user_lastName, user_password, user_isAdmin, user_isActive FROM users WHERE user_email=?`;
     db.query(sql, [user_email], async (err, result) => {
         if (err) {
         return res.status(404).json({ err });
@@ -46,8 +46,11 @@ exports.signup = async (req, res, next) => {
                 });
   
             delete result[0].user_password;
-  
-            res.cookie("bearerToken", token);
+            res.cookie("bearerToken", token);  // this ligne create a session cookie
+            // to create a cookie with a max expiration date, we can use :
+/*             res.cookie("bearerToken", token, {
+              expires: new Date(Date.now() + 15000000000000)
+            }); */
             res.status(200).json({
               user: result[0],
               token: jwt.sign(

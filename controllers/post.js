@@ -121,29 +121,19 @@ exports.isPostLikedByUser = (req, res) => {
   });
 };
 
-
-
-// Bellow there s only code from P6 working with Mongo Db :
-
-/* exports.modifyPost = (req, res, next) => {
-  const postObject = req.file ? {
-    ...JSON.parse(req.body.post),
-    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-  } : { ...req.body };
-  delete postObject._userId;
-  Post.findOne({ _id: req.params.id })
-    .then((post) => {
-      if (post.userId != req.auth.userId) {
-        res.status(403).json({ message: 'Unauthorized request' });
-      } else {
-        Post.updateOne({ _id: req.params.id }, { ...postObject, _id: req.params.id })
-          .then(() => res.status(200).json({ message: 'Objet modifié!' }))
-          .catch(error => res.status(401).json({ error }));
-      }
-    })
-    .catch((error) => {
-      res.status(400).json({ error });
-    });
+exports.modifyPost = (req, res, next) => {
+  const sql = `UPDATE posts SET post_text = ` + req.body.post_text + ` WHERE post_id = ` + req.params.id;   // req.body.post_text needs to be sent beetwen ' and '
+  db.query(sql, (err, result) => {
+    if (result){
+      res.status(200).json(result);
+    }
+    if (err) {
+      res.status(404).json({ err });
+      throw err;
+    }
+  });
 };
- */
+
+
+
 
