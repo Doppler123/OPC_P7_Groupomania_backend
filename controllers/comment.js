@@ -38,3 +38,18 @@ exports.deleteComment = (req, res, next) => {
     }
   });
 };
+
+exports.modifyComment = (req, res, next) => {
+  const { comment_text} =  req.body;
+  const dataWithQuotationMark = "'" + comment_text + "'"
+  const sql = `UPDATE comments SET comment_text = ` + dataWithQuotationMark  + ` WHERE comment_id = ` + req.params.id;   
+  db.query(sql, (err, result) => {
+    if (result){
+      res.status(200).json(result);
+    }
+    if (err) {
+      res.status(404).json({ err });
+      throw err;
+    }
+  });
+};

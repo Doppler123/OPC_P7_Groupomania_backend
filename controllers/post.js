@@ -122,7 +122,9 @@ exports.isPostLikedByUser = (req, res) => {
 };
 
 exports.modifyPost = (req, res, next) => {
-  const sql = `UPDATE posts SET post_text = ` + req.body.post_text + ` WHERE post_id = ` + req.params.id;   // req.body.post_text needs to be sent beetwen ' and '
+  const { post_text} =  req.body;
+  const dataWithQuotationMark = "'" + post_text + "'"
+  const sql = `UPDATE posts SET post_text = ` + dataWithQuotationMark  + ` WHERE post_id = ` + req.params.id;   
   db.query(sql, (err, result) => {
     if (result){
       res.status(200).json(result);
