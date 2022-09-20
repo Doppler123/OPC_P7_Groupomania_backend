@@ -7,7 +7,7 @@ exports.createPost = (req, res, next) => {
   body = {
     ...body,
   };
-  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // this string has to be put in .env
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // put it in .env // check if possible to delete as it's the same in auth middleware?
   const sql =`INSERT INTO posts (post_text, post_userId, post_imageName, post_imagePath) VALUES ("${body.post_text}", "${decodedBearerToken.user_id}", "${body.post_imageName}", "${file.path}")`
   db.query(sql, (err, result) => {
     if (result){
@@ -37,6 +37,7 @@ exports.getAllPost = (req, res, next) => {
 exports.getOnePost = (req, res, next) => {
   const sql = `SELECT * FROM posts p, users u WHERE p.post_id = ` + req.params.id + ` AND u.user_id=p.post_userId;`;
   db.query(sql, (err, result) => {
+    
     if (result){
       res.status(200).json(result);
     }
@@ -48,10 +49,20 @@ exports.getOnePost = (req, res, next) => {
 };
 
 exports.deletePost = (req, res, next) => {
-  const sql = `DELETE FROM posts WHERE post_id = ` + req.params.id;
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra');
+  let sql = null;
+  decodedBearerToken.user_id == 9 ?   // the admin's user_id is 9
+  sql = `DELETE FROM posts WHERE post_id = ` + req.params.id
+  :
+  sql = `DELETE FROM posts WHERE post_id = ` + req.params.id + ` AND  post_userId = ` + decodedBearerToken.user_id
   db.query(sql, (err, result) => {
     if (result){
-      res.status(200).json(result);
+    if (result.affectedRows==1){
+    res.status(200).json(result);
+    }
+    if (result.affectedRows==0){  
+    res.status(401).json(result);
+    }
     }
     if (err) {
       res.status(404).json({ err });
@@ -122,9 +133,10 @@ exports.isPostLikedByUser = (req, res) => {
 };
 
 exports.modifyPost = (req, res, next) => {
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra');
   const { post_text} =  req.body;
   const dataWithQuotationMark = "'" + post_text + "'"
-  const sql = `UPDATE posts SET post_text = ` + dataWithQuotationMark  + ` WHERE post_id = ` + req.params.id;   
+  const sql = `UPDATE posts SET post_text = ` + dataWithQuotationMark  + ` WHERE post_id = ` + req.params.id  + ` AND  post_userId = ` + decodedBearerToken.user_id; 
   db.query(sql, (err, result) => {
     if (result){
       res.status(200).json(result);
