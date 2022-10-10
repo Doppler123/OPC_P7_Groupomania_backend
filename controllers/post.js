@@ -22,7 +22,7 @@ exports.createPost = (req, res, next) => {
 
 exports.getAllPost = (req, res, next) => {
   const sql =
-    "SELECT * FROM posts p, users u WHERE u.user_isActive=1 AND p.post_isActive=1 AND u.user_id=p.post_userId ORDER BY post_time DESC;";
+    "SELECT * FROM posts p, users u WHERE u.user_id=p.post_userId ORDER BY post_time DESC;";
   db.query(sql, (err, result) => {
     if (result){
     res.status(200).json(result);
@@ -48,8 +48,29 @@ exports.getOnePost = (req, res, next) => {
   });
 };
 
+exports.modifyPost = (req, res, next) => {
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // put it in .env
+  const { post_text} =  req.body;
+  let sql = null;
+  const dataWithQuotationMark = "'" + post_text + "'"
+  decodedBearerToken.user_id == 9 ?   // the admin's user_id is 9
+  sql = `UPDATE posts SET post_text = ` + dataWithQuotationMark  + ` WHERE post_id = ` + req.params.id 
+  :
+  sql = `UPDATE posts SET post_text = ` + dataWithQuotationMark  + ` WHERE post_id = ` + req.params.id  + ` AND  post_userId = ` + decodedBearerToken.user_id 
+  db.query(sql, (err, result) => {
+    if (result){
+      res.status(200).json(result);
+    }
+    if (err) {
+      res.status(404).json({ err });
+      throw err;
+    }
+  });
+};
+
+
 exports.deletePost = (req, res, next) => {
-  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra');
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // put it in .env
   let sql = null;
   decodedBearerToken.user_id == 9 ?   // the admin's user_id is 9
   sql = `DELETE FROM posts WHERE post_id = ` + req.params.id
@@ -132,21 +153,6 @@ exports.isPostLikedByUser = (req, res) => {
   });
 };
 
-exports.modifyPost = (req, res, next) => {
-  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra');
-  const { post_text} =  req.body;
-  const dataWithQuotationMark = "'" + post_text + "'"
-  const sql = `UPDATE posts SET post_text = ` + dataWithQuotationMark  + ` WHERE post_id = ` + req.params.id  + ` AND  post_userId = ` + decodedBearerToken.user_id; 
-  db.query(sql, (err, result) => {
-    if (result){
-      res.status(200).json(result);
-    }
-    if (err) {
-      res.status(404).json({ err });
-      throw err;
-    }
-  });
-};
 
 
 

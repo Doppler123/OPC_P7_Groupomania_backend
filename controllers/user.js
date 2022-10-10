@@ -7,34 +7,48 @@ const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 exports.signup = async (req, res, next) => {
-    try {
     const hashedPassword = await bcrypt.hash(req.body.user_password, 10);
     const user = {
-        ...req.body,
-        user_password: hashedPassword
-    };
-    const sql = "INSERT INTO users SET ?";
-    db.query(sql, user, (err, result) => {
-      if (!result) {
+      ...req.body,
+      user_password: hashedPassword
+      };
+      const userEmailWithDotationMarks = '"'+user.user_email+'"'
+      const sqlExists = "SELECT EXISTS (SELECT * FROM users WHERE user_email=" + userEmailWithDotationMarks + ")";
+      db.query(sqlExists, user, (err, result) => {
+      parsedResultAsAnObject = (JSON.parse(JSON.stringify(result[0])))
+      if (Object.values(parsedResultAsAnObject)==1) {
         res.status(200).json({ message: "This email is already existing in database" });
-      } else {
-        res.status(201).json({ message: "New user successfully created" });
       }
-    });
-  } catch (err) {
-    res.status(200).json({ message: "Problem with authentification", err });
+      if (Object.values(parsedResultAsAnObject)==0){
+      const sql = "INSERT INTO users SET ?";
+      db.query(sql, user, (err, result) => {
+        if (result) {
+          res.status(201).json({ message: "New user successfully created" });
+        }
+        if (err) {
+          console.log(err);
+          res.status(404).json({ err });
+          throw err;
+        }})
+      }
+      else if (err) {
+        console.log(err);
+        res.status(404).json({ err });
+        throw err;
+      }
+    }
+    )
   }
-};
 
  exports.login = (req, res, next) => {
     const { user_email, user_password: nonHashedPassword } = req.body;
-    const sql = `SELECT user_id, user_email, user_firstName, user_lastName, user_password, user_isAdmin, user_isActive FROM users WHERE user_email=?`;
+    const sql = `SELECT user_id, user_email, user_firstName, user_lastName, user_password, user_isAdmin FROM users WHERE user_email=?`;
     db.query(sql, [user_email], async (err, result) => {
         if (err) {
         return res.status(404).json({ err });
       }
 
-      if (result[0] && result[0].user_isActive === 1) {
+      if (result[0]) {
         try {
           const { user_password: hashedPassword, user_id } = result[0];
           const compareIsOk = await bcrypt.compare(nonHashedPassword, hashedPassword);
@@ -65,15 +79,10 @@ exports.signup = async (req, res, next) => {
           console.log(err);
           return res.status(400).json({ err });
         }
-      } else if (result[0] && result[0].user_isActive === 0) {
-        res.status(200).json({
-          error: true,
-          message: "Your account has been desactived",
-        });
       } else if (!result[0]) {
         res.status(200).json({
           error: true,
-          message: "Email and Pawword are not matching"
+          message: "Identifiant et/ou mot de passe incorrect"
         })
       }
     });

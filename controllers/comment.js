@@ -3,8 +3,9 @@ const db = dbConfig.dbConnection();
 const jwt = require('jsonwebtoken');
 
 exports.createComment = (req, res, next) => {
-  const { postId, comment_text, user_id } =  req.body;
-  const sql = `INSERT INTO comments (comment_postId, comment_text, comment_userId) VALUES ("${postId}", "${comment_text}", "${user_id}")`;
+  const { postId, comment_text } =  req.body;
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // put it in .env
+  const sql = `INSERT INTO comments (comment_postId, comment_text, comment_userId) VALUES ("${postId}", "${comment_text}", "${decodedBearerToken.user_id}")`;
   db.query(sql, (err, result) => {
     if (err) {
       res.status(404).json({ err });
@@ -52,9 +53,13 @@ exports.deleteComment = (req, res, next) => {
 
 exports.modifyComment = (req, res, next) => {
   const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra');
+  let sql = null;
   const { comment_text} =  req.body;
   const dataWithQuotationMark = "'" + comment_text + "'"
-  const sql = `UPDATE comments SET comment_text = ` + dataWithQuotationMark  + ` WHERE comment_id = ` + req.params.id + ` AND  comment_userId = ` + decodedBearerToken.user_id;
+  decodedBearerToken.user_id == 9 ? // the admin's user_id is 9
+  sql = `UPDATE comments SET comment_text = ` + dataWithQuotationMark  + ` WHERE comment_id = ` + req.params.id
+  :
+  sql = `UPDATE comments SET comment_text = ` + dataWithQuotationMark  + ` WHERE comment_id = ` + req.params.id + ` AND  comment_userId = ` + decodedBearerToken.user_id
   db.query(sql, (err, result) => {
     if (result){
       res.status(200).json(result);
