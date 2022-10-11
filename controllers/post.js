@@ -1,13 +1,14 @@
 const dbConfig = require("../db-config");
 const db = dbConfig.dbConnection();
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 exports.createPost = (req, res, next) => {
   let { body, file } = req;
   body = {
     ...body,
   };
-  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // put it in .env // check if possible to delete as it's the same in auth middleware?
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, process.env.JWT_SECRET); 
   const sql =`INSERT INTO posts (post_text, post_userId, post_imageName, post_imagePath) VALUES ("${body.post_text}", "${decodedBearerToken.user_id}", "${body.post_imageName}", "${file.path}")`
   db.query(sql, (err, result) => {
     if (result){
@@ -49,7 +50,7 @@ exports.getOnePost = (req, res, next) => {
 };
 
 exports.modifyPost = (req, res, next) => {
-  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // put it in .env
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, process.env.JWT_SECRET); 
   const { post_text} =  req.body;
   let sql = null;
   const dataWithQuotationMark = "'" + post_text + "'"
@@ -70,7 +71,7 @@ exports.modifyPost = (req, res, next) => {
 
 
 exports.deletePost = (req, res, next) => {
-  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, 'Paze454qsd12sc54za45ra'); // put it in .env
+  const decodedBearerToken = jwt.verify(req.cookies.bearerToken, process.env.JWT_SECRET); 
   let sql = null;
   decodedBearerToken.user_id == 9 ?   // the admin's user_id is 9
   sql = `DELETE FROM posts WHERE post_id = ` + req.params.id

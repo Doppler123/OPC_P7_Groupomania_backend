@@ -55,7 +55,7 @@ exports.signup = async (req, res, next) => {
           if (compareIsOk) {
             const token = jwt.sign(
                 { user_id },
-                'Paze454qsd12sc54za45ra', { // this string has to be put in .env
+                process.env.JWT_SECRET, { 
                 expiresIn: "24h",
                 });
   
@@ -69,7 +69,7 @@ exports.signup = async (req, res, next) => {
               user: result[0],
               token: jwt.sign(
                 { userId: user_id }, 
-                'Paze454qsd12sc54za45ra', {   // this string has to be put in .env
+                process.env.JWT_SECRET, {  
                 expiresIn: "24h",
               }),
             });
